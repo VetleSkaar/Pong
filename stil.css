@@ -1,0 +1,53 @@
+body {
+    background-color: lightcyan;
+    font-family: "Verdana", sans-serif;
+    font-size: 100%;
+}
+table, td {
+    border: 2px solid black;
+    border-collapse: collapse;
+    padding: 10px;
+}
+th {
+    background-color: cadetblue;
+    border: 2px solid black;
+    border-collapse: collapse;
+    padding: 10px;
+}
+
+h1 {
+    color: navy;
+    margin-left: 20px;
+}
+div {
+    padding: 10px;
+    border: 1px;
+}
+.classIT {
+    background-color: orange;
+}
+.classNo {
+    background-color: lime;
+}
+.classR2 {
+    background-color: cyan;
+}
+.classHistorie {
+    background-color: lemonchiffon;
+}
+.classReligion {
+    background-color: lightcoral;
+}
+.classFysikk {
+    background-color: lightpink;
+}
+.classFriøkt {
+    background-color: grey;
+}
+.classGym {
+    background-color: thistle;
+}
+.classLunsj {
+    background-color: lightgray;
+}
+

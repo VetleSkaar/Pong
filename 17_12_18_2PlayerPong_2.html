@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<!-- Vetle Skaar -->
+<html>
+	<head>
+        <meta charset="UTF-8">
+		<meta type="author" content="Vetle Skaar">
+		<style>
+        </style>
+        <title></title>
+	</head>
+	<body>
+        
+        <canvas id="minCanvas" width="600" height="400"></canvas><br>
+        
+        <div id="score">Score: 0</div><br>
+        <button onclick="reset()">Reset</button><br>
+        <button onclick="lett()">Lett</button>
+        <button onclick="normal()">Middels</button>
+        <button onclick="vanskelig()">Vanskelig</button>
+        <button onclick="brutal()">Veldig vanskelig</button>
+        <!--button onclick="restart()">Start</button-->
+        
+        <script>
+            var ballrandom = 0.5 + Math.random()*0.5;
+            
+            var minCanvas = document.getElementById("minCanvas"),
+                ctx = minCanvas.getContext("2d"),
+                theGameIsOn = true; //spillet er i gang
+            
+            var bane = {
+                bredde: minCanvas.width,
+                hoyde: minCanvas.height,
+                gressFarge: "DarkGreen",
+                linjeFarge: "White",
+                linjeTykkelse: 4
+            };
+            
+            var ball = {
+                farge: "Yellow",
+                radius: 7,
+                xpos: 500,
+                ypos: minCanvas.height /2,
+                xretning: -1,
+                yretning: ballrandom,
+                xfart: 2,
+                yfart: 2
+            };
+            
+            var player1 = {
+                farge: "White",
+                bredde: 10,
+                hoyde: 50,
+                xpos: 15,
+                ypos: bane.hoyde / 2 -25,
+                yretning: 0,
+                yfart: 5
+            };
+            
+            var player2 = {
+                farge: "White",
+                bredde: 10,
+                hoyde:  50,
+                xpos: bane.bredde - 25,
+                ypos: bane.hoyde / 2 -25,
+                yretning: 0,
+                yfart: 5
+            };
+            
+            var fart = 2;
+            var score = 0;
+            
+            function tegnBane(){
+                //console.log("Tegner banen...");
+                
+                ctx.fillStyle = bane.gressFarge;
+                ctx.fillRect(0,0,bane.bredde, bane.hoyde);
+                ctx.fillStyle = bane.linjeFarge;
+                ctx.fillRect(bane.bredde / 2 - bane.linjeTykkelse /2, 0, bane.linjeTykkelse, bane.hoyde);
+            }
+            function tegnBall(){
+                //console.log("Tegner ballen...");
+                
+                ctx.beginPath();
+                ctx.arc(ball.xpos, ball.ypos, ball.radius, 0, Math.PI*2);
+                ctx.closePath();
+                ctx.fillStyle = ball.farge;
+                ctx.fill();
+                ball.xpos = ball.xpos + fart * ball.xretning;
+                ball.ypos = ball.ypos + fart * ball.yretning;
+            }
+            function tegnPlayer1(){
+                //console.log("Tegner racket...");
+                
+                ctx.fillStyle = player1.farge;
+                ctx.fillRect(player1.xpos, player1.ypos, player1.bredde, player1.hoyde);
+                
+                if(player1.yretning === 1 && player1.ypos + player1.hoyde >= bane.hoyde){
+                    return;
+                }
+                if(player1.yretning === -1 && player1.ypos <= 0){
+                    return;
+                }
+                
+                player1.ypos = player1.ypos + (player1.yfart * player1.yretning);
+            }
+            function tegnPlayer2(){
+                //console.log("Tegner motstander...");
+                
+                ctx.fillStyle = player2.farge;
+                ctx.fillRect(player2.xpos, player2.ypos, player2.bredde, player2.hoyde);
+                
+                if(player2.yretning === 1 && player2.ypos + player2.hoyde >= bane.hoyde){
+                    return;
+                }
+                if(player2.yretning === -1 && player2.ypos <= 0){
+                    return;
+                }
+                
+                player2.ypos = player2.ypos + (player2.yfart * player2.yretning);
+            }
+            function sjekkOmBallTrefferVegg(){
+                //console.log("treffer vegg?");
+                
+                //if(ball.xpos <= ball.radius){
+                //    ball.xretning = 1
+                //}
+                if(ball.ypos + ball.radius >= bane.hoyde){
+                    ball.yretning =-(ballrandom);
+                }
+                if(ball.ypos <= ball.radius){
+                    ball.yretning = ballrandom;
+                }
+                
+            }
+            function sjekkOmBallTrefferPlayer1(){
+                //console.log("Treffer motstander?");
+                var venstre = ball.xpos + ball.radius < player1.xpos;
+                var hoyre = ball.xpos - ball.radius > player1.xpos + player1.bredde;
+                var over = ball.ypos + ball.radius < player1.ypos;
+                var under = ball.ypos - ball.radius > player1.ypos + player1.hoyde;
+                
+                if(!venstre && !hoyre && !over && !under){
+                    ball.xretning = 1;
+                    console.log("Treff p1");
+                    
+                    fart += 0.25;
+                    console.log("Ny fart : "+fart);
+                    
+                    ++score;
+                    document.getElementById("score").innerHTML = "Score: "+score;
+                }
+            }
+            function sjekkOmBallTrefferPlayer2(){
+                //console.log("Racket");
+                
+                var venstre = ball.xpos + ball.radius < player2.xpos;
+                var hoyre = ball.xpos - ball.radius > player2.xpos + player2.bredde;
+                var over = ball.ypos + ball.radius < player2.ypos;
+                var under = ball.ypos - ball.radius > player2.ypos + player2.hoyde;
+                
+                if(!venstre && !hoyre && !over && !under){
+                    ball.xretning = -1;
+                    console.log("Treff p2");
+                    
+                    fart += 0.25;
+                    console.log("Ny fart : "+fart);
+                    
+                    
+                    document.getElementById("score").innerHTML = "Score: "+score;
+                }
+            }
+            function sjekkOmBallErUtenforBanen(){
+                //console.log("Er ballen ute?");
+                
+                if(ball.xpos - ball.radius > bane.bredde + ball.radius){
+                    theGameIsOn = false;
+                } else if(ball.xpos + ball.radius < 0){
+                    theGameIsOn = false;
+                }
+                
+            }
+            
+            document.onkeydown = function(evt){ //Bevegelse
+                var tast = evt.keyCode;
+                console.log(tast);
+                
+                if(tast === 38){
+                    player2.yretning = -1;
+                } else if(tast === 40){
+                    player2.yretning = 1;   
+                } else if(tast === 87){
+                    player1.yretning = -1;
+                } else if(tast === 83){
+                    player1.yretning = 1;
+                } else if(tast === 17){
+                    player2.ypos = ball.ypos;    
+                }
+            }
+            document.onkeyup = function(evt){
+                var tast = evt.keyCode;
+                
+                if(tast === 38 && player2.yretning === -1){
+                    player2.yretning = 0;
+                } else if(tast === 40 && player2.yretning === 1){
+                    player2.yretning = 0;
+                } else if(tast === 87 && player1.yretning === -1){
+                    player1.yretning = 0;
+                } else if(tast === 83 && player1.yretning === 1){
+                    player1.yretning = 0;
+                } 
+                
+            }
+            
+            function gameLoop(){
+                tegnBane();
+                tegnBall();
+                tegnPlayer1();
+                tegnPlayer2();
+                sjekkOmBallTrefferVegg();
+                sjekkOmBallTrefferPlayer1();
+                sjekkOmBallTrefferPlayer2();
+                sjekkOmBallErUtenforBanen();
+                
+                if(theGameIsOn){
+                    requestAnimationFrame(gameLoop);
+            
+                } else{
+                    //TODO - Lagre highscore
+                    //TODO - Vise resultatliste
+                }
+            }
+            
+            function reset(){
+                
+                player1.xpos = 25;
+                player1.ypos = bane.hoyde / 2 -25;
+                player2.xpos = bane.bredde - 25;
+                player2.ypos = bane.hoyde / 2 -25;
+                
+                ball.xpos = 500;
+                ball.ypos = 200;
+                ball.xretning = -1;
+                ball.yretning = 0.5 + Math.random()*0.5;
+                fart = 2;
+                
+                score = 0;
+                document.getElementById("score").innerHTML = "Score: "+score;
+                
+                
+                if(theGameIsOn){
+                    cancelAnimationFrame(requestAnimationFram(gameLoop));
+                    theGameIsOn = false;
+                } else{
+                    theGameIsOn = true;
+                    gameLoop();
+                }
+                
+            }
+            
+            function restart(){
+                
+            }
+            
+            function lett(){
+                fart = 2;
+                reset();
+            }
+            function normal(){
+                fart = 4;
+                reset();
+            }
+            function vanskelig(){
+                fart = 6;
+                reset();
+            }
+            function brutal(){
+                fart = 10;
+                reset();
+            }
+            
+            gameLoop();
+            
+        </script>
+	</body>
+</html>
