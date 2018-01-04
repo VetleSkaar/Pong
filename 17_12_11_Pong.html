@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<!-- Vetle Skaar -->
+<html>
+	<head>
+        <meta charset="UTF-8">
+		<meta type="author" content="Vetle Skaar">
+		<style>
+        </style>
+        <title></title>
+	</head>
+	<body>
+        
+        <canvas id="minCanvas" width="600" height="400"></canvas><br>
+        
+        <div id="score">Score: 0</div><br>
+        <button onclick="reset()">Reset</button><br>
+        <button onclick="lett()">Lett</button>
+        <button onclick="normal()">Middels</button>
+        <button onclick="vanskelig()">Vanskelig</button>
+        <button onclick="brutal()">Veldig vanskelig</button>
+        <!--button onclick="restart()">Start</button-->
+        
+        <script>
+            var ballrandom = 0.5 + Math.random()*0.5;
+            
+            var minCanvas = document.getElementById("minCanvas"),
+                ctx = minCanvas.getContext("2d"),
+                theGameIsOn = true; //spillet er i gang
+            
+            var bane = {
+                bredde: minCanvas.width,
+                hoyde: minCanvas.height,
+                gressFarge: "DarkGreen",
+                linjeFarge: "White",
+                linjeTykkelse: 4
+            };
+            
+            var ball = {
+                farge: "Yellow",
+                radius: 7,
+                xpos: 100,
+                ypos: 200,
+                xretning: -1,
+                yretning: ballrandom,
+                xfart: 4,
+                yfart: 4
+            };
+            
+            var motstander = {
+                farge: "White",
+                bredde: 10,
+                hoyde: 50,
+                xpos: 15,
+                ypos: ball.ypos
+            };
+            
+            var racket = {
+                farge: "White",
+                bredde: 10,
+                hoyde:  50,
+                xpos: bane.bredde - 15,
+                ypos: bane.hoyde / 2 -25,
+                yretning: 0,
+                yfart: 5
+            };
+            
+            var fart = 4;
+            var score = 0;
+            
+            function tegnBane(){
+                //console.log("Tegner banen...");
+                
+                ctx.fillStyle = bane.gressFarge;
+                ctx.fillRect(0,0,bane.bredde, bane.hoyde);
+                ctx.fillStyle = bane.linjeFarge;
+                ctx.fillRect(bane.bredde / 2 - bane.linjeTykkelse /2, 0, bane.linjeTykkelse, bane.hoyde);
+            }
+            function tegnBall(){
+                //console.log("Tegner ballen...");
+                
+                ctx.beginPath();
+                ctx.arc(ball.xpos, ball.ypos, ball.radius, 0, Math.PI*2);
+                ctx.closePath();
+                ctx.fillStyle = ball.farge;
+                ctx.fill();
+                ball.xpos = ball.xpos + ball.xfart * ball.xretning;
+                ball.ypos = ball.ypos + ball.yfart * ball.yretning;
+            }
+            function tegnRacket(){
+                //console.log("Tegner racket...");
+                
+                ctx.fillStyle = racket.farge;
+                ctx.fillRect(racket.xpos, racket.ypos, racket.bredde, racket.hoyde);
+                
+                if(racket.yretning === 1 && racket.ypos + racket.hoyde >= bane.hoyde){
+                    return;
+                }
+                if(racket.yretning === -1 && racket.ypos <= 0){
+                    return;
+                }
+                
+                
+                racket.ypos = racket.ypos + (racket.yfart * racket.yretning);
+            }
+            function tegnMotstander(){
+                //console.log("Tegner motstander...");
+                
+                ctx.fillStyle = motstander.farge;
+                ctx.fillRect(motstander.xpos, ball.ypos - motstander.hoyde / 2, motstander.bredde, motstander.hoyde);
+            }
+            function sjekkOmBallTrefferVegg(){
+                //console.log("treffer vegg?");
+                
+                if(ball.xpos <= ball.radius){
+                    ball.xretning = 1
+                }
+                if(ball.ypos + ball.radius >= bane.hoyde){
+                    ball.yretning =-(ballrandom);
+                }
+                if(ball.ypos <= ball.radius){
+                    ball.yretning = ballrandom;
+                }
+                
+            }
+            function sjekkOmBallTrefferMotstander(){
+                //console.log("Treffer motstander?");
+                
+                if(ball.xpos - ball.radius <= motstander.xpos + motstander.bredde){
+                    ball.xretning = 1;  
+                }
+            }
+            function sjekkOmBallTrefferRacket(){
+                //console.log("Racket");
+                
+                var venstre = ball.xpos + ball.radius < racket.xpos;
+                var hoyre = ball.xpos - ball.radius > racket.xpos + racket.bredde;
+                var over = ball.ypos + ball.radius < racket.ypos;
+                var under = ball.ypos - ball.radius > racket.ypos + racket.hoyde;
+                
+                if(!venstre && !hoyre && !over && !under){
+                    ball.xretning = -1;
+                    ++score;
+                    document.getElementById("score").innerHTML = "Score: "+score;
+                }
+            }
+            function sjekkOmBallErUtenforBanen(){
+                //console.log("Er ballen ute?");
+                
+                if(ball.xpos - ball.radius > bane.bredde + ball.radius){
+                    theGameIsOn = false;
+                }
+                
+            }
+            
+            document.onkeydown = function(evt){
+                var tast = evt.keyCode;
+                console.log(tast);
+                
+                if(tast === 38){
+                    racket.yretning = -1;
+                } else if(tast === 40){
+                    racket.yretning = 1;   
+                }   
+            }
+            document.onkeyup = function(evt){
+                var tast = evt.keyCode;
+                
+                if(tast === 38 && racket.yretning === -1){
+                    racket.yretning = 0;
+                } else if(tast === 40 && racket.yretning === 1){
+                    racket.yretning = 0;
+                }
+                
+            }
+            
+            function gameLoop(){
+                tegnBane();
+                tegnBall();
+                tegnRacket();
+                tegnMotstander();
+                sjekkOmBallTrefferVegg();
+                sjekkOmBallTrefferMotstander();
+                sjekkOmBallTrefferRacket();
+                sjekkOmBallErUtenforBanen();
+                
+                if(theGameIsOn){
+                requestAnimationFrame(gameLoop);
+            
+                } else{
+                    //TODO - Lagre highscore
+                    //TODO - Vise resultatliste
+                }
+            }
+            
+            function reset(){
+                
+                racket.xpos = bane.bredde - 15;
+                racket.ypos = bane.hoyde / 2 -25;
+                
+                ball.xpos = 100;
+                ball.ypos = 200;
+                ball.xretning = -1;
+                ball.yretning = 0.5 + Math.random()*0.5;
+                ball.xfart = fart;
+                ball.yfart = fart;
+                
+                score = 0;
+                document.getElementById("score").innerHTML = "Score: "+score;
+                
+                
+                if(theGameIsOn){
+                    cancelAnimationFrame(requestAnimationFram(gameLoop));
+                    theGameIsOn = false;
+                } else{
+                    theGameIsOn = true;
+                    gameLoop();
+                }
+                
+            }
+            
+            function restart(){
+                
+            }
+            
+            function lett(){
+                fart = 2;
+                reset();
+            }
+            function normal(){
+                fart = 4;
+                reset();
+            }
+            function vanskelig(){
+                fart = 6;
+                reset();
+            }
+            function brutal(){
+                fart = 10;
+                reset();
+            }
+            
+            gameLoop();
+            
+        </script>
+	</body>
+</html>
